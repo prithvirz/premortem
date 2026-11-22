@@ -44,3 +44,18 @@ Severity has glyph + label; each edge state has a distinct dash pattern and a la
 
 ## D15: playwright-core with system Edge for browser checks
 No browser download; `npm run smoke` drives the installed Edge against a running server. Kept as a script rather than a test-runner dependency.
+
+## D16: Network tags instead of membership curves
+Membership curves crossed every service and carried little information. Each service now lists its networks as tags (kept, + joined, − left), and a network strip lists all networks with member counts. Compose semantics are preserved: implicit `default` is labeled, external networks are marked, and `network_mode` is shown as a label, never as a fake membership.
+
+## D17: Highlight explains the cause
+For network findings the highlight marks the network that was shared in BEFORE and not in AFTER as "lost", and the involved services' other networks as "related". Before, selection dimmed exactly the information needed to understand the finding.
+
+## D18: Severed only for configuration-level breaks
+Edges get a deliberate gap with end caps only when a finding marks the relationship `broken`. Inferred `at-risk` edges stay dashed and are labeled "possibly". The headline qualifier always states the basis.
+
+## D19: Remount the canvas per analyzed model
+React Flow's own initial fit, run after node measurement, was the only reliable fit when switching scenarios. The canvas remounts when the unified model changes; view toggles do not remount, so positions and camera stay stable.
+
+## D20: Mobile defaults to a risk list
+At 390px a full topology graph is unreadable. The list shows affected relationships first, then services by severity, with the same tags and badges. The graph stays one tap away and opens on the top risk.

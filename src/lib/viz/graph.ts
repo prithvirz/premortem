@@ -26,6 +26,10 @@ export interface GraphNode {
   /** Human-readable differences from the structural diff. */
   changes: string[];
   changed: boolean;
+  /** Categories of change, for specific badges such as "Networks changed". */
+  changeKinds: ChangeKind[];
+  /** `network_mode` per version, when set (replaces network membership). */
+  networkMode: { before?: string; after?: string };
   /** Highest severity among findings whose affected service is this node. */
   severity?: Severity;
   findingIds: string[];
@@ -53,11 +57,13 @@ export interface GraphModel {
   edges: GraphEdge[];
 }
 
+export type ChangeKind = "networks" | "ports" | "dependencies" | "environment" | "image" | "volumes";
+
 const svcId = (n: string) => `svc:${n}`;
 const netId = (identity: string) => `net:${identity}`;
 
-const NODE_W = 210;
-const NODE_H = 96;
+const NODE_W = 220;
+const NODE_H = 150;
 
 function describeChanges(d: ServiceDiff | undefined): string[] {
   if (!d) return [];
@@ -74,6 +80,18 @@ function describeChanges(d: ServiceDiff | undefined): string[] {
   add("env keys removed", d.envKeysRemoved);
   add("volumes added", d.volumesAdded);
   add("volumes removed", d.volumesRemoved);
+  return out;
+}
+
+function changeKindsOf(d: ServiceDiff | undefined): ChangeKind[] {
+  if (!d) return [];
+  const out: ChangeKind[] = [];
+  if (d.networksAdded.length + d.networksRemoved.length > 0) out.push("networks");
+  if (d.portsAdded.length + d.portsRemoved.length > 0) out.push("ports");
+  if (d.dependsOnAdded.length + d.dependsOnRemoved.length > 0) out.push("dependencies");
+  if (d.envKeysAdded.length + d.envKeysRemoved.length > 0) out.push("environment");
+  if (d.image) out.push("image");
+  if (d.volumesAdded.length + d.volumesRemoved.length > 0) out.push("volumes");
   return out;
 }
 
@@ -106,6 +124,8 @@ export function buildGraphModel(
     ports: { before: [], after: [] },
     changes: [],
     changed: false,
+    changeKinds: [],
+    networkMode: {},
     findingIds: [],
     involvedIds: [],
     unknowns: [],
@@ -124,12 +144,18 @@ export function buildGraphModel(
       else n.inAfter = true;
       n.image = svc.image ?? (svc.build !== undefined ? `build: ${svc.build}` : n.image);
       n.ports[side] = portLabels(c, svc.name);
+      if (svc.networkMode) n.networkMode[side] = svc.networkMode;
       nodes.set(n.id, n);
     }
   }
   for (const n of nodes.values()) {
     const d = diffByName.get(n.label);
     n.changes = describeChanges(d);
+    n.changeKinds = changeKindsOf(d);
+    if (n.inBefore && n.inAfter && n.networkMode.before !== n.networkMode.after) {
+      n.changes.push(`network_mode: ${n.networkMode.before ?? "(unset)"} -> ${n.networkMode.after ?? "(unset)"}`);
+      if (!n.changeKinds.includes("networks")) n.changeKinds.unshift("networks");
+    }
     n.changed = n.changes.length > 0;
   }
 
@@ -253,7 +279,7 @@ export function buildGraphModel(
 
 function layout(nodes: Map<string, GraphNode>, edges: Map<string, GraphEdge>): void {
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "LR", ranksep: 110, nodesep: 46, marginx: 20, marginy: 20 });
+  g.setGraph({ rankdir: "LR", ranksep: 230, nodesep: 56, marginx: 20, marginy: 20 });
   g.setDefaultEdgeLabel(() => ({}));
   const services = [...nodes.values()].filter((n) => n.kind === "service").sort((a, b) => a.label.localeCompare(b.label));
   for (const n of services) g.setNode(n.id, { width: NODE_W, height: NODE_H });

@@ -31,25 +31,25 @@ export function Timeline({ steps, active, onActivate, onInspect, onGoTo }: Props
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2 border-b border-seam px-4 py-2.5">
-        <h2 className="font-display text-lg">Incident reconstruction</h2>
+        <h2 className="font-display text-lg">Deployment change story</h2>
         <span className="text-xs text-veil">
           {active === null ? `${steps.length} steps` : `Step ${active + 1} of ${steps.length}`}
         </span>
         <div className="ml-auto flex gap-1.5">
-          <button type="button" className="rounded-md border border-seam px-2.5 py-1 text-xs hover:bg-slab disabled:opacity-40" onClick={() => go((active ?? 0) - 1)} disabled={active === null || active === 0} aria-label="Previous step">
+          <button type="button" className="min-h-9 rounded-md border border-seam px-3 py-1 text-xs hover:bg-slab disabled:opacity-40" onClick={() => go((active ?? 0) - 1)} disabled={active === null || active === 0} aria-label="Previous step">
             ← Prev
           </button>
-          <button type="button" className="rounded-md border border-violet/50 bg-violet/10 px-2.5 py-1 text-xs text-violet hover:bg-violet/20 disabled:opacity-40" onClick={() => go(active === null ? 0 : active + 1)} disabled={active === steps.length - 1} aria-label={active === null ? "Start investigation" : "Next step"}>
+          <button type="button" className="min-h-9 rounded-md border border-violet/50 bg-violet/10 px-3 py-1 text-xs text-violet hover:bg-violet/20 disabled:opacity-40" onClick={() => go(active === null ? 0 : active + 1)} disabled={active === steps.length - 1} aria-label={active === null ? "Start the change story" : "Next step"}>
             {active === null ? "Begin ▸" : "Next →"}
           </button>
           {active !== null && (
-            <button type="button" className="rounded-md border border-seam px-2.5 py-1 text-xs text-mist hover:bg-slab" onClick={() => onActivate(null)}>
+            <button type="button" className="min-h-9 rounded-md border border-seam px-3 py-1 text-xs text-mist hover:bg-slab" onClick={() => onActivate(null)}>
               Reset
             </button>
           )}
         </div>
       </div>
-      <ol ref={listRef} className="pm-scroll max-h-[340px] space-y-1 overflow-y-auto p-2" aria-label="Investigation steps">
+      <ol ref={listRef} className="pm-scroll max-h-[340px] space-y-1 overflow-y-auto p-2" aria-label="Deployment change story steps">
         {steps.map((s, i) => {
           const isActive = active === i;
           const revealed = active === null || i <= active;
@@ -80,12 +80,12 @@ export function Timeline({ steps, active, onActivate, onInspect, onGoTo }: Props
                     </ul>
                     <div className="flex flex-wrap gap-2">
                       {s.nodeIds.length > 0 && (
-                        <button type="button" onClick={() => onGoTo(s)} className="rounded-md border border-spectral/40 px-2 py-0.5 text-xs text-spectral hover:bg-spectral/10">
+                        <button type="button" onClick={() => onGoTo(s)} className="min-h-8 rounded-md border border-spectral/40 px-2.5 py-1 text-xs text-spectral hover:bg-spectral/10">
                           Go to {s.nodeIds.length === 1 ? s.nodeIds[0]!.replace(/^(svc|net):(project:|named:|external:)?/, "") : "affected services"}
                         </button>
                       )}
                       {(s.findingId || s.relatedFindingIds.length > 0) && (
-                        <button type="button" onClick={() => onInspect(s)} className="rounded-md border border-ember/40 px-2 py-0.5 text-xs text-ember hover:bg-ember/10">
+                        <button type="button" onClick={() => onInspect(s)} className="min-h-8 rounded-md border border-ember/40 px-2.5 py-1 text-xs text-ember hover:bg-ember/10">
                           {s.findingId ? "Inspect evidence" : `View ${s.relatedFindingIds.length} related finding${s.relatedFindingIds.length === 1 ? "" : "s"}`}
                         </button>
                       )}

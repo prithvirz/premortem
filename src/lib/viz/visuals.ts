@@ -1,6 +1,6 @@
 import type { Severity } from "../compose/types";
 import type { EdgeVisual, NodeVisual } from "./view";
-import type { EdgeKind } from "./graph";
+import type { ChangeKind, EdgeKind } from "./graph";
 
 /** Palette. Charcoal base, violet and cyan for structure, orange and red only for risk. */
 export const COLORS = {
@@ -36,6 +36,8 @@ export interface EdgeSpec {
   width: number;
   animated: boolean;
   opacity: number;
+  /** Draw with a deliberate gap at the midpoint: the relationship is cut in the configuration. */
+  severed?: boolean;
 }
 
 export function edgeSpec(visual: EdgeVisual, kind: EdgeKind): EdgeSpec {
@@ -47,7 +49,7 @@ export function edgeSpec(visual: EdgeVisual, kind: EdgeKind): EdgeSpec {
   }
   switch (visual) {
     case "broken":
-      return { stroke: COLORS.red, dash: "10 6", width: 2.5, animated: false, opacity: 1 };
+      return { stroke: COLORS.red, width: 2.5, animated: false, opacity: 1, severed: true };
     case "at-risk":
       return { stroke: COLORS.amber, dash: "4 4", width: 2, animated: true, opacity: 1 };
     case "isolated":
@@ -63,20 +65,45 @@ export function edgeSpec(visual: EdgeVisual, kind: EdgeKind): EdgeSpec {
 
 export interface NodeBadge {
   text: string;
-  tone: "risk" | "add" | "remove" | "neutral" | "unknown";
+  tone: "severity" | "add" | "remove" | "dangling" | "change" | "unknown";
+  /** Set for severity badges so they use the same color as every other severity indicator. */
+  color?: string;
 }
 
-export function nodeBadges(visual: NodeVisual, risk: Severity | undefined, hasUnknowns: boolean, dangling: boolean): NodeBadge[] {
+const CHANGE_LABEL: Record<ChangeKind, string> = {
+  networks: "Networks changed",
+  ports: "Ports changed",
+  dependencies: "Dependencies changed",
+  environment: "Env keys changed",
+  image: "Image changed",
+  volumes: "Volumes changed",
+};
+export const changeLabel = (k: ChangeKind): string => CHANGE_LABEL[k];
+
+/** Badges for a service node. Status first, then severity, then specific changes (max two plus a count). */
+export function nodeBadges(
+  visual: NodeVisual,
+  risk: Severity | undefined,
+  hasUnknowns: boolean,
+  dangling: boolean,
+  changeKinds: ChangeKind[] = [],
+): NodeBadge[] {
   const out: NodeBadge[] = [];
-  if (visual === "added") out.push({ text: "Added", tone: "add" });
-  if (visual === "removed") out.push({ text: dangling ? "Removed, still referenced" : "Removed", tone: dangling ? "risk" : "remove" });
-  if (visual === "missing") out.push({ text: "Not defined", tone: "risk" });
-  if (visual === "changed") out.push({ text: "Changed", tone: "neutral" });
-  if (risk && risk !== "info") out.push({ text: `${severityVisual(risk).glyph} ${severityVisual(risk).label}`, tone: "risk" });
+  if (visual === "added") out.push({ text: "+ Added in AFTER", tone: "add" });
+  if (visual === "removed") out.push(dangling ? { text: "Removed, still referenced", tone: "dangling" } : { text: "Ghost of BEFORE", tone: "remove" });
+  if (visual === "missing") out.push({ text: "Not defined", tone: "dangling" });
+  if (risk && risk !== "info") {
+    const v = severityVisual(risk);
+    out.push({ text: `${v.glyph} ${v.label}`, tone: "severity", color: v.color });
+  }
+  if (visual === "changed") {
+    const shown = changeKinds.slice(0, 2).map((k): NodeBadge => ({ text: CHANGE_LABEL[k], tone: "change" }));
+    out.push(...shown);
+    if (changeKinds.length > 2) out.push({ text: `+${changeKinds.length - 2} more`, tone: "change" });
+  }
   if (hasUnknowns) out.push({ text: "? Unresolved", tone: "unknown" });
   return out;
 }
-
 export const EDGE_KIND_LABEL: Record<EdgeKind, string> = {
   depends_on: "depends_on",
   links: "links",

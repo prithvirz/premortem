@@ -90,7 +90,7 @@ describe("graph model: invariants", () => {
       for (const x of svcs) {
         for (const y of svcs) {
           if (x.id >= y.id) continue;
-          const apart = Math.abs(x.position.x - y.position.x) >= 210 || Math.abs(x.position.y - y.position.y) >= 96;
+          const apart = Math.abs(x.position.x - y.position.x) >= 220 || Math.abs(x.position.y - y.position.y) >= 150;
           expect(apart).toBe(true);
         }
       }

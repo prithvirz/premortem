@@ -7,7 +7,8 @@ import type { ReportSummary } from "@/lib/viz/summary";
 import { EDGE_KIND_LABEL, severityVisual } from "@/lib/viz/visuals";
 import { BasisTag, SectionLabel, SeverityBadge, basisHint } from "./ui";
 
-export type Selection = { kind: "finding" | "node" | "edge"; id: string } | null;
+import type { Selection } from "@/lib/viz/highlight";
+export type { Selection };
 type OkReport = Extract<AnalysisReport, { ok: true }>;
 
 interface Props {
@@ -31,11 +32,14 @@ const REL_STATUS: Record<Relationship["status"], { label: string; cls: string; g
 };
 
 function FindingButton({ f, onSelect }: { f: Finding; onSelect: (s: Selection) => void }) {
+  const strong = f.severity === "critical" || f.severity === "high";
+  const color = severityVisual(f.severity).color;
   return (
     <button
       type="button"
       onClick={() => onSelect({ kind: "finding", id: f.id })}
-      className="flex w-full items-start gap-2 rounded-lg border border-seam bg-slab/60 px-2.5 py-2 text-left text-sm hover:border-violet/50 hover:bg-slab"
+      className={`flex min-h-11 w-full items-start gap-2 rounded-lg border px-2.5 text-left hover:bg-slab ${strong ? "border-seam bg-slab/80 py-2.5 text-[14.5px] font-medium" : f.severity === "info" ? "border-transparent bg-transparent py-1.5 text-[13px] text-mist" : "border-seam bg-slab/50 py-2 text-sm"}`}
+      style={strong ? { borderLeft: `3px solid ${color}` } : undefined}
     >
       <SeverityBadge severity={f.severity} compact />
       <span className="leading-snug">{f.title}</span>
@@ -43,6 +47,31 @@ function FindingButton({ f, onSelect }: { f: Finding; onSelect: (s: Selection) =
   );
 }
 
+function FindingGroups({ findings, onSelect }: { findings: Finding[]; onSelect: (s: Selection) => void }) {
+  const risks = findings.filter((f) => f.severity !== "info");
+  const context = findings.filter((f) => f.severity === "info");
+  return (
+    <div className="space-y-2">
+      {risks.length > 0 && (
+        <div className="space-y-1.5">
+          {risks.map((f) => (
+            <FindingButton key={f.id} f={f} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
+      {context.length > 0 && (
+        <details className="rounded-lg border border-seam/70 px-2 py-1">
+          <summary className="cursor-pointer py-1 text-xs text-veil">Context, informational only ({context.length})</summary>
+          <div className="space-y-0.5 pb-1">
+            {context.map((f) => (
+              <FindingButton key={f.id} f={f} onSelect={onSelect} />
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
 function ServiceLink({ name, onFocus, onSelect }: { name: string; onFocus: (ids: string[]) => void; onSelect: (s: Selection) => void }) {
   return (
     <button
@@ -246,7 +275,7 @@ function NodeView({ id, model, report, mode, onSelect, onFocus }: { id: string; 
       )}
       <div>
         <SectionLabel>Findings on this service</SectionLabel>
-        {own.length ? <div className="space-y-1.5">{own.map((f) => <FindingButton key={f.id} f={f} onSelect={onSelect} />)}</div> : <p className="text-sm text-mist">None.</p>}
+        {own.length ? <FindingGroups findings={own} onSelect={onSelect} /> : <p className="text-sm text-mist">None.</p>}
       </div>
       {involved.length > 0 && (
         <div>
@@ -321,24 +350,20 @@ function Overview({ report, summary, onSelect }: { report: OkReport; summary: Re
         <SectionLabel>Supported conclusions</SectionLabel>
         <ul className="space-y-1.5 text-sm">
           <li>
-            <span className="font-mono text-blood">{summary.validationFailures}</span> finding{summary.validationFailures === 1 ? "" : "s"} where Compose is expected to reject the AFTER file.
+            <span className={`font-mono ${summary.validationFailures ? "text-blood" : "text-veil"}`}>{summary.validationFailures}</span> finding{summary.validationFailures === 1 ? "" : "s"} where Compose is expected to reject the AFTER file.
           </li>
           <li>
-            <span className="font-mono text-ember">{summary.inferred}</span> inferred possibilit{summary.inferred === 1 ? "y" : "ies"} from topology and ports.
+            <span className={`font-mono ${summary.inferred ? "text-ember" : "text-veil"}`}>{summary.inferred}</span> inferred possibilit{summary.inferred === 1 ? "y" : "ies"} from topology and ports.
           </li>
           <li>
-            <span className="font-mono text-violet">{summary.policyFindings}</span> policy violation{summary.policyFindings === 1 ? "" : "s"}.
+            <span className={`font-mono ${summary.policyFindings ? "text-violet" : "text-veil"}`}>{summary.policyFindings}</span> policy violation{summary.policyFindings === 1 ? "" : "s"}.
           </li>
         </ul>
       </div>
       <div>
-        <SectionLabel>All findings</SectionLabel>
+        <SectionLabel>Findings</SectionLabel>
         {report.findings.length ? (
-          <div className="space-y-1.5">
-            {report.findings.map((f) => (
-              <FindingButton key={f.id} f={f} onSelect={onSelect} />
-            ))}
-          </div>
+          <FindingGroups findings={report.findings} onSelect={onSelect} />
         ) : (
           <p className="text-sm text-mist">No supported risks detected between these versions. That is not a guarantee the deployment will succeed.</p>
         )}
