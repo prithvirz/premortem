@@ -11,7 +11,8 @@ npm run dev        # http://localhost:3000
 npm test
 npm run typecheck
 npm run build
-npm run smoke      # browser checks; needs a running server (default http://localhost:3100) and Microsoft Edge
+npm run smoke      # browser checks (both suites); needs `npm run build && npm start -- -p 3200` and Microsoft Edge
+npm run a11y       # axe-core WCAG 2.1 A/AA audit against the same server
 ```
 
 ## Use the engine directly
@@ -26,4 +27,4 @@ if (report.ok) console.log(report.findings);
 - Decisions: `.kiro/decisions/decisions.md`
 - Kiro usage record: `.kiro/KIRO_USAGE.md`
 
-Status: Milestone 2 (observatory UI) under review. Specs: `.kiro/specs/premortem-m1/`, `.kiro/specs/premortem-m2/`.
+Status: Milestone 3.1 (comparison engine, observatory UI, What-if Fix Preview, release audit). Specs: `.kiro/specs/`. Not yet deployed.

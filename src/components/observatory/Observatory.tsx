@@ -105,8 +105,18 @@ export function Observatory() {
     for (const e of proposed.view.edges) if (proposed.restoredEdgeIds.includes(e.id)) [e.id, e.source, e.target].forEach((x) => ids.add(x));
     const networks = new Map<string, "related">();
     for (const n of proposed.view.nodes) for (const t of n.networks) if (t.state === "proposed") networks.set(t.id, "related");
+    // New risks in the proposed AFTER stay lit too, so a preview never hides what it introduces.
+    const introduced = new Set(preview!.introduced.filter((f) => f.severity !== "info").map((f) => f.id));
+    for (const f of preview!.introduced) {
+      if (!introduced.has(f.id)) continue;
+      ids.add(`svc:${f.service}`);
+      for (const r of f.relationships) [r.from, r.to].forEach((s) => ids.add(`svc:${s}`));
+    }
+    for (const e of proposed.view.edges) if (e.findingIds.some((id) => introduced.has(id))) ids.add(e.id);
+    // The networks of services behind a new risk explain it, so keep them lit.
+    for (const n of proposed.view.nodes) if (ids.has(n.id)) for (const t of n.networks) if (!networks.has(t.id)) networks.set(t.id, "related");
     return ids.size ? { ids, networks } : null;
-  }, [proposed]);
+  }, [proposed, preview]);
   const highlight = proposed && previewSide === "proposed" ? previewHighlight : baseHighlight;
 
   // Frame what the preview reconnects (endpoints of restored relationships), not the removed ghost.
@@ -178,6 +188,18 @@ export function Observatory() {
     setPreview(p);
     setPreviewSide("proposed");
     setStepIndex(null);
+    // Land on the panel header (finding title, chosen correction, verdict) rather than wherever the button was.
+    const id = `fix-${fixOffer.findingId}`;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const box = el.closest<HTMLElement>(".pm-scroll");
+        const nested = box && box.scrollHeight > box.clientHeight && getComputedStyle(box).overflowY !== "visible";
+        if (nested) box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - 12;
+        else el.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      }),
+    );
   };
   const discardPreview = () => {
     setPreview(null);
@@ -287,6 +309,7 @@ export function Observatory() {
           </button>
         </div>
       </header>
+      <main className="space-y-3">
       <p className="line-clamp-2 text-xs text-mist sm:line-clamp-1">
         {scenario ? (
           <>
@@ -357,7 +380,10 @@ export function Observatory() {
 
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_380px]">
             <div className="min-w-0 space-y-3">
-              <Panel className="overflow-hidden">
+              <Panel className="overflow-hidden" aria-labelledby="graph-heading">
+                <h2 id="graph-heading" className="sr-only">
+                  Service graph and risk list
+                </h2>
                 <div className="flex flex-wrap items-center gap-2 border-b border-seam px-3 py-2">
                   {isMobile && (
                     <div role="radiogroup" aria-label="Mobile layout" className="flex rounded-lg border border-seam bg-void p-0.5">
@@ -392,7 +418,9 @@ export function Observatory() {
                           </button>
                         ))}
                       </div>
-                      <span className={`text-xs ${preview.targetCleared ? "text-spectral" : "text-ember"}`}>{preview.verdict}</span>
+                      <span className={`text-xs ${preview.targetCleared && !preview.newRisk ? "text-spectral" : "text-ember"}`} data-testid="preview-toolbar-verdict">
+                        {preview.verdict}
+                      </span>
                       <button type="button" onClick={discardPreview} className="ml-auto min-h-9 rounded-md border border-seam px-3 text-sm text-bone hover:bg-slab">
                         Discard preview
                       </button>
@@ -493,6 +521,8 @@ export function Observatory() {
           </div>
         </>
       )}
+
+      </main>
 
       <footer className="pt-1 pb-5 text-xs text-veil">
         Static analysis of two Compose files. PreMortem separates confirmed configuration changes from possible consequences; it does not predict runtime failures with certainty.

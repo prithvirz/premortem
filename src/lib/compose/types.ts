@@ -104,6 +104,7 @@ export interface Relationship {
 export type RuleId =
   | "network-lost"
   | "dependency-dangling"
+  | "dependency-unreachable"
   | "network-undefined"
   | "port-removed"
   | "port-host-changed"

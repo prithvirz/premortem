@@ -18,11 +18,12 @@ export function Verdict({ summary, headline, onOpenHeadline, onShowUnknowns }: P
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5" role="status" aria-label="Analysis summary">
       {headline && top ? (
-        <button type="button" onClick={onOpenHeadline} className="group flex min-w-0 items-center gap-3 rounded-lg text-left" aria-label={`Top risk: ${headline.text}. ${headline.qualifier}. Open evidence.`}>
+        <button type="button" onClick={onOpenHeadline} className="group flex min-w-0 items-center gap-3 rounded-lg text-left">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-base" style={{ color: top.color, borderColor: `${top.color}66`, background: `${top.color}14` }} aria-hidden="true">
             {top.glyph}
           </span>
           <span className="min-w-0">
+            <span className="sr-only">Top risk: </span>
             <span className="block font-mono text-[15px] leading-tight font-semibold sm:text-base" style={{ color: top.color }}>
               {headline.text}
             </span>

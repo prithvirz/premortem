@@ -59,7 +59,7 @@ const beforeValue = (page) => page.getByTestId("editor-before").inputValue();
   check("network: engine verdict says warning cleared", /Configuration warning cleared after reanalysis\.$/.test(fv.trim()), fv);
   const diff = await page.getByTestId("fix-diff").innerText();
   check("network: diff shows exactly the networks line change", /networks: \[frontend, backend\][\s\S]*networks: \[frontend, backend, cache\]/.test(diff) && diff.split("\n").filter((l) => /^[+−]/.test(l.trim())).length === 2);
-  check("network: restored relationship drawn in graph", await page.getByRole("button", { name: /depends_on api to redis: shared network restored, in preview/ }).isVisible());
+  check("network: restored relationship drawn in graph", await page.getByRole("button", { name: /depends_on api to redis, in preview: shared network restored/ }).isVisible());
   const tag = await page.locator('.react-flow__node[data-id="svc:api"] [data-network]', { hasText: "cache" }).innerText();
   check("network: proposed cache tag on api", /preview/i.test(tag), JSON.stringify(tag));
   check("network: no severed edge in proposed view", (await page.getByRole("button", { name: /severed/ }).count()) === 0);
@@ -70,7 +70,7 @@ const beforeValue = (page) => page.getByTestId("editor-before").inputValue();
 
   await page.getByRole("radio", { name: "Current AFTER" }).click();
   await settle(page, 400);
-  check("network: compare toggle shows the severed current state", await page.getByRole("button", { name: /api to redis: severed/ }).isVisible());
+  check("network: compare toggle shows the severed current state", await page.getByRole("button", { name: /api to redis, severed/ }).isVisible());
   await page.screenshot({ path: `${shots}/02-desktop-network-compare-current.png` });
   await page.getByRole("radio", { name: "Proposed AFTER" }).click();
 
@@ -84,7 +84,7 @@ const beforeValue = (page) => page.getByTestId("editor-before").inputValue();
   await page.getByRole("button", { name: "Discard preview" }).first().click();
   await settle(page, 400);
   check("network: discard removes preview toolbar", (await page.getByTestId("preview-toolbar").count()) === 0);
-  check("network: discard restores severed edge", await page.getByRole("button", { name: /api to redis: severed/ }).isVisible());
+  check("network: discard restores severed edge", await page.getByRole("button", { name: /api to redis, severed/ }).isVisible());
   check("network: discard leaves no restored edges", (await page.getByRole("button", { name: /in preview/ }).count()) === 0);
 
   // Apply requires explicit confirmation; cancel does nothing
@@ -155,14 +155,14 @@ const beforeValue = (page) => page.getByTestId("editor-before").inputValue();
   const ins = await panel.innerText();
   check("rename: both missing-service findings listed as cleared", /Cleared \(2\)/i.test(ins) && /app depends on missing service/.test(ins) && /worker depends on missing service/.test(ins));
   check("rename: no new findings", /New in the proposed AFTER \(0\)/i.test(ins));
-  check("rename: two reconnected relationships in graph", (await page.getByRole("button", { name: /to database: reconnected, in preview/ }).count()) === 2);
+  check("rename: two reconnected relationships in graph", (await page.getByRole("button", { name: /to database, in preview: reconnected/ }).count()) === 2);
   check("rename: ghost postgres gone in proposed view", (await page.locator('.react-flow__node[data-id="svc:postgres"]').count()) === 0);
   await showFixPanel(page);
   await page.screenshot({ path: `${shots}/04-desktop-dependency-fix-preview.png` });
   await page.screenshot({ path: `${shots}/04b-desktop-dependency-fix-preview-full.png`, fullPage: true });
   await page.getByRole("radio", { name: "Current AFTER" }).click();
   await settle(page, 400);
-  check("rename: current side still shows the ghost and severed edges", (await page.locator('.react-flow__node[data-id="svc:postgres"]').count()) === 1 && (await page.getByRole("button", { name: /severed, target service missing/ }).count()) === 2);
+  check("rename: current side still shows the ghost and severed edges", (await page.locator('.react-flow__node[data-id="svc:postgres"]').count()) === 1 && (await page.getByRole("button", { name: /severed: target service missing/ }).count()) === 2);
   await page.getByRole("radio", { name: "Proposed AFTER" }).click();
   await page.getByRole("button", { name: /Edit Compose files/ }).click();
   check("rename: preview did not mutate AFTER editor", (await afterValue(page)) === A0);
@@ -184,6 +184,76 @@ const beforeValue = (page) => page.getByTestId("editor-before").inputValue();
   await page.getByRole("button", { name: /Top risk: api: required/ }).click();
   check("policy: no automatic fix, never invents values", /never reads or invents/.test(await page.getByTestId("fix-ineligible").innerText()));
   check("policy: no console errors", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// ---------------- Desktop: rename onto a disconnected network (M3.1) ----------------
+{
+  const { ctx, page, errors } = await open({ width: 1440, height: 1000 });
+  const before = "services:\n  app:\n    image: acme/app:1.4\n    depends_on: [postgres]\n  postgres:\n    image: postgres:16\n";
+  const after =
+    "services:\n  app:\n    image: acme/app:1.4\n    environment:\n      DATABASE_URL: postgres://app:hunt3r-pass@postgres:5432/app\n    depends_on: [postgres]\n  database:\n    image: postgres:16\n    networks: [data]\nnetworks:\n  data:\n";
+  await page.getByRole("button", { name: /Edit Compose files/ }).click();
+  await page.getByTestId("editor-before").fill(before);
+  await page.getByTestId("editor-after").fill(after);
+  await page.getByTestId("editor-policy").fill("");
+  await settle(page, 600);
+  check("stranded: headline is the missing service", /app → postgres: target service missing/.test(await verdict(page).innerText()));
+  await page.getByRole("button", { name: /Top risk: app → postgres/ }).click();
+  await settle(page, 400);
+  await page.getByTestId("fix-confirm").check();
+  await page.getByTestId("fix-panel").getByRole("button", { name: "Preview possible fix" }).click();
+  await settle(page, 1300);
+  const fv = await page.getByTestId("fix-verdict").innerText();
+  const tally = await page.getByTestId("fix-tally").innerText();
+  check("stranded: verdict says cleared but a new risk was detected", /Configuration warning cleared after reanalysis, but 1 new risk detected\./.test(fv), fv);
+  check("stranded: summary shows 1 resolved and 1 new risk", /1 resolved · 1 new risk/.test(tally), tally);
+  check("stranded: toolbar verdict is not styled as resolved", (await page.getByTestId("preview-toolbar-verdict").evaluate((el) => getComputedStyle(el).color)) === "rgb(255, 154, 60)");
+  const framed = await page.evaluate(() => {
+    const c = document.querySelector(".react-flow").getBoundingClientRect();
+    return ["svc:app", "svc:database"].every((id) => {
+      const r = document.querySelector(`.react-flow__node[data-id="${id}"]`)?.getBoundingClientRect();
+      return r && r.left >= c.left && r.right <= c.right && r.top >= c.top && r.bottom <= c.bottom;
+    });
+  });
+  check("stranded: both services of the new risk are framed in the graph", framed);
+  check("stranded: verdict is not styled as resolved", (await page.getByTestId("fix-verdict").evaluate((el) => getComputedStyle(el).color)) === "rgb(255, 154, 60)");
+  const ins = await page.getByTestId("fix-panel").innerText();
+  check("stranded: new disconnected-network finding listed", /New in the proposed AFTER \(1\)[\s\S]*app → database: no shared network/i.test(ins));
+  check("stranded: no 'fixed' or 'safe' claims", !/deployment (is )?fixed|safe to deploy/i.test(ins + fv));
+  check("stranded: proposed edge is possibly affected, not restored", (await page.getByRole("button", { name: /app to database: possibly: no shared network/ }).count()) === 1 && (await page.getByRole("button", { name: /in preview/ }).count()) === 0);
+  const textOutsideEditors = await page.evaluate(() => {
+    const clone = document.body.cloneNode(true);
+    clone.querySelectorAll("textarea").forEach((t) => t.remove());
+    return clone.textContent ?? "";
+  });
+  check("stranded: secret in the diff context is redacted", !textOutsideEditors.includes("hunt3r-pass") && /\[REDACTED\]/.test(await page.getByTestId("fix-diff").innerText()));
+  check("stranded: AFTER editor unchanged by preview", (await afterValue(page)) === after);
+  await page.getByRole("button", { name: /Hide Compose files/ }).click();
+  await settle(page, 300);
+  await showFixPanel(page);
+  await page.screenshot({ path: `${shots}/06-desktop-rename-new-risk-preview.png` });
+  check("stranded: no console errors", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// ---------------- Desktop: preview keeps the finding title and correction in view ----------------
+{
+  const { ctx, page } = await open({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: /Top risk: api → redis/ }).click();
+  await settle(page, 400);
+  await page.getByTestId("fix-panel").getByRole("button", { name: "Preview possible fix" }).click();
+  await settle(page, 900);
+  const vis = await page.evaluate(() => {
+    const box = document.querySelector('aside[aria-label="Evidence inspector"] .pm-scroll').getBoundingClientRect();
+    const inView = (sel) => {
+      const r = document.querySelector(sel)?.getBoundingClientRect();
+      return !!r && r.top >= box.top - 1 && r.bottom <= box.bottom + 1 && r.top >= 0 && r.bottom <= window.innerHeight;
+    };
+    return { context: inView('[data-testid="fix-context"]'), verdict: inView('[data-testid="fix-verdict"]') };
+  });
+  check("scroll: finding title and chosen correction visible after preview opens", vis.context, JSON.stringify(vis));
+  check("scroll: reanalysis verdict visible after preview opens", vis.verdict, JSON.stringify(vis));
   await ctx.close();
 }
 

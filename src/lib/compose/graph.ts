@@ -29,10 +29,39 @@ export function effectiveNetworks(c: NormalizedCompose, name: string, seen = new
   return out;
 }
 
+/**
+ * The Docker-level network a Compose identity refers to. `external: true` and `name: X` both mean the
+ * Docker network literally named X, so they are the same network even under different keys.
+ */
+export function dockerNetwork(identity: string): string {
+  return identity.replace(/^(external|named):/, "docker:");
+}
+
 export function sharesNetwork(c: NormalizedCompose, a: string, b: string): boolean {
-  const na = effectiveNetworks(c, a);
-  for (const id of effectiveNetworks(c, b)) if (na.has(id)) return true;
+  const na = new Set([...effectiveNetworks(c, a)].map(dockerNetwork));
+  for (const id of effectiveNetworks(c, b)) if (na.has(dockerNetwork(id))) return true;
   return false;
+}
+
+export type Reachability = "shared" | "none" | "unknown";
+
+/**
+ * Whether two services can reach each other over a Compose network, judged from configuration.
+ * network_mode values other than `service:X` (host, none, bridge, container:...) are "unknown":
+ * their connectivity depends on the host, so no failure is inferred.
+ */
+export function reachability(c: NormalizedCompose, a: string, b: string): Reachability {
+  const resolvesToSpecial = (name: string, seen = new Set<string>()): boolean => {
+    const m = c.services[name]?.networkMode;
+    if (!m || seen.has(name)) return false;
+    if (!m.startsWith("service:")) return true;
+    seen.add(name);
+    return resolvesToSpecial(m.slice(8), seen);
+  };
+  // Both in the host namespace (or sharing one via service:X) counts as shared.
+  if (sharesNetwork(c, a, b)) return "shared";
+  if (resolvesToSpecial(a) || resolvesToSpecial(b)) return "unknown";
+  return "none";
 }
 
 export interface DeclaredLink {

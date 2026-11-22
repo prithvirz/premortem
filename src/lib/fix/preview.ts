@@ -25,6 +25,10 @@ export interface FixPreview {
   remaining: Finding[];
   introduced: Finding[];
   verdict: string;
+  /** Counts for the summary line, e.g. "1 resolved · 1 new risk · 0 still reported". */
+  tally: string;
+  /** True when the proposed AFTER has new non-informational findings: never present this as resolved. */
+  newRisk: boolean;
   diff: DiffLine[];
 }
 
@@ -87,11 +91,14 @@ export function previewFix(input: AnalysisInput, current: OkReport, findingId: s
   const targetCleared = !now.has(findingId);
   const significantNew = introduced.filter((f) => f.severity !== "info");
 
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
   let verdict: string;
   if (!targetCleared) verdict = "The warning remains after reanalysis. This change would not clear it.";
-  else if (introduced.length === 0) verdict = "Configuration warning cleared after reanalysis.";
-  else
-    verdict = `Configuration warning cleared after reanalysis, but ${introduced.length} new finding${introduced.length === 1 ? "" : "s"} appeared${significantNew.length ? "" : " (informational)"}.`;
+  else if (significantNew.length > 0) verdict = `Configuration warning cleared after reanalysis, but ${plural(significantNew.length, "new risk")} detected.`;
+  else if (introduced.length > 0) verdict = `Configuration warning cleared after reanalysis. ${plural(introduced.length, "informational note")} added.`;
+  else verdict = "Configuration warning cleared after reanalysis.";
+  const significantRemaining = remaining.filter((f) => f.severity !== "info");
+  const tally = `${cleared.length} resolved · ${plural(significantNew.length, "new risk")} · ${significantRemaining.length} other risk${significantRemaining.length === 1 ? "" : "s"} still reported`;
 
   return {
     option,
@@ -103,6 +110,8 @@ export function previewFix(input: AnalysisInput, current: OkReport, findingId: s
     remaining,
     introduced,
     verdict,
+    tally,
+    newRisk: significantNew.length > 0,
     diff: lineDiff(input.after, option.patchedAfter),
   };
 }

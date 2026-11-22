@@ -5,10 +5,11 @@ import { dependencyDanglingRule } from "./rules/dependency";
 import { envRequiredRule } from "./rules/env";
 import { networkLostRule, networkUndefinedRule } from "./rules/network";
 import { portsRule } from "./rules/ports";
+import { dependencyUnreachableRule } from "./rules/unreachable";
 import type { Rule } from "./rules/types";
 import type { Diagnostic, Finding, NormalizedCompose, RequiredEnvPolicy, Severity } from "./types";
 
-export const RULES: Rule[] = [dependencyDanglingRule, networkUndefinedRule, networkLostRule, portsRule, envRequiredRule];
+export const RULES: Rule[] = [dependencyDanglingRule, networkUndefinedRule, networkLostRule, dependencyUnreachableRule, portsRule, envRequiredRule];
 
 export const LIMITATIONS = [
   "Static analysis of the two files only. Nothing is run, and no runtime failure is predicted with certainty.",

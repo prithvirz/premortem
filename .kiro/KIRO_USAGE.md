@@ -38,3 +38,11 @@ Update this file as the project proceeds. Entries are factual.
   - Diff ordering showed additions before deletions; fixed.
   - A coverage gap: retargeting to a service on another network cleared the warning with no new finding. Kiro added a fix-level reachability warning instead of a new rule, and recorded the gap.
 - Screenshot review by Kiro found the dependency preview's reconnected edges looping through the replacement node, and the camera framing the removed ghost. Fixed by moving the confirmed replacement into the ghost's position and framing restored endpoints.
+## Milestone 3.1
+- Kiro checkpointed the approved M3 work (`032e8ae`), then scoped the new rule against the existing ones so it would not duplicate `network-lost`, `dependency-dangling`, or `network-undefined`.
+- While scoping, Kiro found a related identity bug: `external: true` and `name: X` were compared as different networks even though both mean the Docker network X. It was fixed in `sharesNetwork` and covered by tests.
+- 23 new rule tests cover positive, negative, pre-existing, default, external, named, and special network-mode cases. The original three scenarios are asserted to be unchanged.
+- The M3 test that checked the fix-level warning was replaced by the M3.1 scenario: the preview now clears the missing service and reports `app → database: no shared network` as a new risk.
+- Screenshot review caught three presentation errors that tests had not: the toolbar verdict was cyan despite a new risk, the new-risk services were off-frame, and their networks were dimmed. All three were fixed and are now guarded by browser checks.
+- Kiro ran axe-core against the production build. It found a serious accessible-name/visible-text mismatch (verdict, story buttons, edge labels), a missing `main` landmark, and a heading-order skip. All are fixed; 0 violations remain in eight states. No real screen reader was available, so screen-reader behavior is unverified.
+- Release review: no secrets, tokens, local paths, or build artifacts are tracked. The demo `change-me` placeholders are intentional and are never displayed.

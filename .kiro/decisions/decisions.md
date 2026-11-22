@@ -74,3 +74,15 @@ Retargeting to a service on another network clears the dangling-reference warnin
 
 ## D25: Apply is two-step, AFTER-only, undoable once
 Preview never mutates editors. Apply requires a second confirmation, touches only AFTER, and offers one undo. Editing a file discards a stale preview.
+
+## D26: dependency-unreachable is inferred and narrowly scoped (supersedes D24)
+A declared relationship in AFTER whose services share no network is an inferred risk, never a validation error, because depends_on only orders startup. It skips pairs that `network-lost` covers, missing targets, and undeclared networks. Already-disconnected pairs are info. Special network modes are "not analyzed", not failures. The M3 fix-level reachability warning was removed, since the engine now reports this and the preview lists it as a new risk.
+
+## D27: Compare networks by Docker name
+`external: true` and `name: X` refer to the same Docker network X. `sharesNetwork` now normalizes both before comparing, so differently keyed references are not reported as disconnected.
+
+## D28: A preview that introduces risk never looks resolved
+The verdict, tally, and styling come from the engine's new non-informational findings. Cyan is used only when the target cleared and nothing significant was introduced.
+
+## D29: Automated a11y audit as a release gate
+`scripts/a11y.mjs` runs axe-core (WCAG 2.1 A/AA and best practice) on eight UI states. Accessible names end with the visible text, so voice control can target what is on screen.

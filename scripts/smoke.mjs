@@ -70,7 +70,7 @@ async function overlapCheck(page, label) {
   await settle(page);
   check("severed: verdict names the services", /api → redis: shared network lost/.test(await verdict(page).innerText()));
   check("severed: verdict marks the claim as inferred", /inferred from configuration/i.test(await verdict(page).innerText()));
-  const brokenLabel = page.getByRole("button", { name: /depends_on api to redis: severed, no shared network/ });
+  const brokenLabel = page.getByRole("button", { name: /depends_on api to redis, severed: no shared network/ });
   check("severed: severed api->redis label visible", await brokenLabel.isVisible());
   const dash = await page.evaluate(() => document.getElementById("e:depends_on:api->redis")?.style.strokeDasharray ?? "");
   check("severed: broken edge is drawn with a deliberate gap", dash.split(/[ ,]+/).filter(Boolean).length === 3, `(${dash})`);
@@ -128,7 +128,7 @@ async function overlapCheck(page, label) {
   await scenarioButton(page, "The Renamed Database").click();
   await settle(page);
   check("renamed: verdict names both dependents and the target", /app, worker → postgres: target service missing/.test(await verdict(page).innerText()));
-  check("renamed: two severed labels", (await page.getByRole("button", { name: /severed, target service missing/ }).count()) === 2);
+  check("renamed: two severed labels", (await page.getByRole("button", { name: /severed: target service missing/ }).count()) === 2);
   check("renamed: ghost postgres node", /Removed, still referenced/.test(await page.locator('.react-flow__node[data-id="svc:postgres"]').innerText()));
   check("renamed: added database node is distinct", (await page.locator('.react-flow__node[data-id="svc:database"] [data-visual="added"]').count()) === 1);
   const critColor = await page.locator('.react-flow__node[data-id="svc:app"] span', { hasText: "Critical" }).evaluate((el) => getComputedStyle(el).color);

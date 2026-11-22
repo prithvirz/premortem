@@ -1,4 +1,4 @@
-import { effectiveNetworks, sharesNetwork } from "../compose/graph";
+import { effectiveNetworks } from "../compose/graph";
 import type { Finding, NormalizedCompose } from "../compose/types";
 import { attachNetwork, retargetDependency, type PatchResult } from "./patch";
 
@@ -153,10 +153,8 @@ function dependencyOffer(f: Finding, before: NormalizedCompose, after: Normalize
         `"${cand}" was added in AFTER with the same ${match} as "${target}". That is a hint, not proof that it is a rename.`,
         `If application code connects to the hostname "${target}", it would also need to change; PreMortem does not read code or environment values.`,
       ],
-      // The network rule only compares services present in both versions, so check reachability here.
-      warnings: refs
-        .filter((r) => !sharesNetwork(after, r, cand))
-        .map((r) => `"${r}" does not share a network with "${cand}" in AFTER. The reference would be valid, but "${r}" may not be able to reach "${cand}".`),
+      // Reachability of the new target is reported by the engine (dependency-unreachable) on reanalysis.
+      warnings: [],
       confirmation: `I have checked that "${cand}" replaces "${target}".`,
       patchedAfter: result.text,
     });
@@ -181,6 +179,13 @@ export function proposeFix(f: Finding, before: NormalizedCompose, after: Normali
       return { eligible: false, findingId: f.id, reason: "network_mode references are not edited automatically." };
     }
     return dependencyOffer(f, before, after, afterText);
+  }
+  if (f.ruleId === "dependency-unreachable") {
+    return {
+      eligible: false,
+      findingId: f.id,
+      reason: "Which network should connect them is a design choice (it changes isolation), so no automatic correction is offered. Attach one service to a network the other uses, or confirm the dependency only orders startup.",
+    };
   }
   return {
     eligible: false,

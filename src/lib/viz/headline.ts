@@ -40,6 +40,9 @@ export function buildHeadline(findings: Finding[]): Headline | null {
       text = `${from.join(", ")} → ${target}: target service missing`;
       break;
     }
+    case "dependency-unreachable":
+      text = `${parts[1]} → ${parts[2]}: no shared network`;
+      break;
     case "network-undefined":
       text = `${top.service}: undefined network "${parts[2]}"`;
       break;

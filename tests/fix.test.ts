@@ -187,20 +187,26 @@ describe("previewFix: isolation and reanalysis", () => {
     expect(p.report.findings).toEqual([]);
     expect(p.verdict).toBe("Configuration warning cleared after reanalysis.");
   });
-  it("warns when the replacement is not reachable, even though the reference warning clears", () => {
-    // database is on a different network, so retargeting clears the dangling reference but loses connectivity.
-    const before = "services:\n  app: { image: x, depends_on: [postgres] }\n  postgres: { image: pg }\n";
-    const after = "services:\n  app: { image: x, depends_on: [postgres] }\n  database: { image: pg, networks: [data] }\nnetworks: { data: {} }\n";
+  it("M3.1: renaming to a database on another network clears the missing service and surfaces a new risk", () => {
+    const before = "services:\n  app:\n    image: acme/app\n    depends_on: [postgres]\n  postgres:\n    image: postgres:16\n";
+    const after = "services:\n  app:\n    image: acme/app\n    depends_on: [postgres]\n  database:\n    image: postgres:16\n    networks: [data]\nnetworks:\n  data:\n";
     const r = ok(before, after);
-    const f = r.findings.find((x) => x.ruleId === "dependency-dangling")!;
+    expect(r.findings.map((f) => f.id)).toEqual(["dependency-dangling:app:postgres:depends_on"]);
+    const f = r.findings[0]!;
     const offer = proposeFix(f, r.models.before, r.models.after, after);
     if (!offer.eligible) throw new Error("not eligible");
+    const snapshot = after;
     const p = previewFix({ before, after }, r, f.id, offer.options[0]!);
     if ("error" in p) throw new Error(p.error);
+    expect(after).toBe(snapshot);
     expect(p.targetCleared).toBe(true);
-    expect(offer.options[0]!.warnings).toEqual([`"app" does not share a network with "database" in AFTER. The reference would be valid, but "app" may not be able to reach "database".`]);
-  });
-  it("says the warning remains when the engine still reports it", () => {
+    expect(p.cleared.map((x) => x.id)).toEqual(["dependency-dangling:app:postgres:depends_on"]);
+    expect(p.introduced.map((x) => [x.id, x.severity, x.basis])).toEqual([["dependency-unreachable:app:database:depends_on", "medium", "inferred"]]);
+    expect(p.newRisk).toBe(true);
+    expect(p.verdict).toBe("Configuration warning cleared after reanalysis, but 1 new risk detected.");
+    expect(p.tally).toBe("1 resolved · 1 new risk · 0 other risks still reported");
+    expect(JSON.stringify(p.verdict + p.tally)).not.toMatch(/fixed|safe to deploy|all clear/i);
+  });  it("says the warning remains when the engine still reports it", () => {
     const s = scenario("severed-cache");
     const r = ok(s.before, s.after);
     const f = r.findings.find((x) => x.id === "network-lost:api:redis")!;

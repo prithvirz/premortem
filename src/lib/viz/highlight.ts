@@ -14,7 +14,7 @@ export interface Highlight {
   networks: Map<string, NetworkEmphasis>;
 }
 
-const NETWORK_RULES = new Set<Finding["ruleId"]>(["network-lost", "network-undefined"]);
+const NETWORK_RULES = new Set<Finding["ruleId"]>(["network-lost", "network-undefined", "dependency-unreachable"]);
 
 function membershipsOf(model: GraphModel, nodeId: string, side?: "before" | "after"): string[] {
   return model.edges

@@ -96,7 +96,7 @@ function changeKindsOf(d: ServiceDiff | undefined): ChangeKind[] {
 }
 
 function riskLabelFor(rel: Relationship, ruleId: Finding["ruleId"]): string {
-  if (rel.type === "network" || ruleId === "network-lost") return "no shared network";
+  if (rel.type === "network" || ruleId === "network-lost" || ruleId === "dependency-unreachable") return "no shared network";
   if (ruleId === "network-undefined") return "undefined network";
   if (rel.type === "container_port") return "container port changed";
   return "target service missing";
@@ -268,7 +268,12 @@ export function buildGraphModel(
             e.target === svcId(r.to) &&
             (r.type === "container_port" ? e.kind === "depends_on" || e.kind === "links" : e.kind === r.type),
         );
-        for (const e of candidates) mark(e, state, riskLabelFor(r, f.ruleId), f.id);
+        // Informational context never restyles (or hides) a declared relationship.
+        for (const e of candidates) {
+          if (state === "isolated") {
+            if (!e.findingIds.includes(f.id)) e.findingIds.push(f.id);
+          } else mark(e, state, riskLabelFor(r, f.ruleId), f.id);
+        }
       }
     }
   }

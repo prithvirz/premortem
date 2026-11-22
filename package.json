@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "node scripts/smoke.mjs http://localhost:3200 && node scripts/smoke-fix.mjs http://localhost:3200"
+    "smoke": "node scripts/smoke.mjs http://localhost:3200 && node scripts/smoke-fix.mjs http://localhost:3200",
+    "a11y": "node scripts/a11y.mjs http://localhost:3200"
   },
   "dependencies": {
     "next": "^16.4.6",
@@ -25,6 +26,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@xyflow/react": "^13.0.2",
+    "axe-core": "^4.14.1",
     "playwright-core": "^1.65.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.0",

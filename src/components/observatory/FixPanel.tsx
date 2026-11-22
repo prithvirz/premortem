@@ -7,6 +7,8 @@ import { SectionLabel, SeverityBadge } from "./ui";
 
 interface Props {
   offer: FixOffer;
+  /** Title of the finding this fix is for, kept visible while previewing. */
+  findingTitle: string;
   preview: FixPreview | null;
   onPreview: (optionId: string) => void;
   onDiscard: () => void;
@@ -15,7 +17,7 @@ interface Props {
 
 const NOT_PROOF = "A static configuration check. It does not show that the deployment works.";
 
-export function FixPanel({ offer, preview, onPreview, onDiscard, onApply }: Props) {
+export function FixPanel({ offer, findingTitle, preview, onPreview, onDiscard, onApply }: Props) {
   const [optionId, setOptionId] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [applyStep, setApplyStep] = useState(false);
@@ -42,8 +44,15 @@ export function FixPanel({ offer, preview, onPreview, onDiscard, onApply }: Prop
   const canPreview = !needsConfirm || confirmed;
 
   return (
-    <section className="pm-fix rounded-xl border border-spectral/35 bg-spectral/[0.035] p-3" aria-labelledby="fix-title" data-testid="fix-panel">
+    <section className="pm-fix scroll-mt-3 rounded-xl border border-spectral/35 bg-spectral/[0.035] p-3" aria-labelledby="fix-title" data-testid="fix-panel" id={`fix-${offer.findingId}`}>
       <div className="mb-1 text-[11px] font-semibold tracking-[0.14em] text-spectral uppercase">◇ Possible fix · what-if preview</div>
+      {active && (
+        <p className="mb-1.5 text-xs text-mist" data-testid="fix-context">
+          For: <span className="text-bone">{findingTitle}</span>
+          <br />
+          Previewing: <span className="text-spectral">{active.option.label}</span>
+        </p>
+      )}
       <h3 id="fix-title" className="font-display text-[17px] leading-snug text-bone">
         {offer.title}
       </h3>
@@ -127,11 +136,14 @@ export function FixPanel({ offer, preview, onPreview, onDiscard, onApply }: Prop
         </div>
       ) : (
         <div className="mt-3 space-y-3" data-testid="fix-preview">
-          <div className={`rounded-lg border p-2.5 ${active.targetCleared ? "border-spectral/50 bg-spectral/[0.07]" : "border-ember/50 bg-ember/[0.06]"}`} role="status" aria-live="polite">
+          <div className={`rounded-lg border p-2.5 ${active.targetCleared && !active.newRisk ? "border-spectral/50 bg-spectral/[0.07]" : "border-ember/50 bg-ember/[0.06]"}`} role="status" aria-live="polite">
             <div className="text-[11px] font-semibold tracking-[0.14em] text-veil uppercase">Reanalysis of the proposed AFTER</div>
-            <p className={`mt-0.5 text-sm font-medium ${active.targetCleared ? "text-spectral" : "text-ember"}`} data-testid="fix-verdict">
-              <span aria-hidden="true">{active.targetCleared ? "✓ " : "! "}</span>
+            <p className={`mt-0.5 text-sm font-medium ${active.targetCleared && !active.newRisk ? "text-spectral" : "text-ember"}`} data-testid="fix-verdict">
+              <span aria-hidden="true">{active.targetCleared && !active.newRisk ? "✓ " : "! "}</span>
               {active.verdict}
+            </p>
+            <p className="mt-1 font-mono text-[11.5px] text-bone" data-testid="fix-tally">
+              {active.tally}
             </p>
             <p className="mt-1 text-xs text-mist">{NOT_PROOF}</p>
           </div>

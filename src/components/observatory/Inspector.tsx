@@ -130,7 +130,7 @@ function FindingView({ f, onSelect, onFocus, fix }: { f: Finding; onSelect: (s: 
         <p className="mt-2 text-xs text-mist">{basisHint(f.basis)}</p>
       </div>
 
-      {fix && <FixPanel offer={fix.offer} preview={fix.preview} onPreview={fix.onPreview} onDiscard={fix.onDiscard} onApply={fix.onApply} />}
+      {fix && <FixPanel offer={fix.offer} findingTitle={f.title} preview={fix.preview} onPreview={fix.onPreview} onDiscard={fix.onDiscard} onApply={fix.onApply} />}
 
       <div>
         <SectionLabel>Why this is flagged</SectionLabel>

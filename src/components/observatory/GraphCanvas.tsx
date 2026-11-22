@@ -151,6 +151,7 @@ function RiskEdge(props: EdgeProps<RiskFlowEdge>) {
   const severed = spec.severed && geo && geo.len > GAP * 3;
   const dash = severed ? `${geo.len / 2 - GAP} ${GAP * 2} ${geo.len}` : spec.dash;
   const showLabel = view.label && view.visual !== "isolated";
+  const labelText = view.visual === "at-risk" ? `possibly: ${view.label}` : view.visual === "restored" ? `${view.label} · preview` : (view.label ?? "");
 
   return (
     <>
@@ -180,10 +181,11 @@ function RiskEdge(props: EdgeProps<RiskFlowEdge>) {
             data-edge-label={id}
             className={`nodrag nopan absolute rounded-full border bg-void px-2 py-0.5 font-mono text-[10px] whitespace-nowrap ${dimmed ? "pm-dim" : ""}`}
             style={{ transform: `translate(-50%, ${severed ? "0" : "-50%"}) translate(${lx}px, ${severed ? ly + 14 : ly}px)`, color: spec.stroke, borderColor: `${spec.stroke}70`, pointerEvents: "all" }}
-            aria-label={`${EDGE_KIND_LABEL[view.kind]} ${view.source.slice(4)} to ${view.target.slice(4)}: ${view.visual === "broken" ? "severed, " : ""}${view.label}${view.visual === "restored" ? ", in preview" : ""}`}
+            // The accessible name ends with the exact visible text, so voice control can target what is shown.
+            aria-label={`${EDGE_KIND_LABEL[view.kind]} ${view.source.slice(4)} to ${view.target.slice(4)}${view.visual === "broken" ? ", severed" : view.visual === "restored" ? ", in preview" : ""}: ${labelText}`}
           >
             <span aria-hidden="true">{EDGE_GLYPH[view.visual]} </span>
-            {view.visual === "at-risk" ? `possibly: ${view.label}` : view.visual === "restored" ? `${view.label} · preview` : view.label}
+            {labelText}
           </button>
         </EdgeLabelRenderer>
       )}

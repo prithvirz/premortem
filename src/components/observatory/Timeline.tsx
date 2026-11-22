@@ -36,11 +36,12 @@ export function Timeline({ steps, active, onActivate, onInspect, onGoTo }: Props
           {active === null ? `${steps.length} steps` : `Step ${active + 1} of ${steps.length}`}
         </span>
         <div className="ml-auto flex gap-1.5">
-          <button type="button" className="min-h-9 rounded-md border border-seam px-3 py-1 text-xs hover:bg-slab disabled:opacity-40" onClick={() => go((active ?? 0) - 1)} disabled={active === null || active === 0} aria-label="Previous step">
-            ← Prev
+          <button type="button" className="min-h-9 rounded-md border border-seam px-3 py-1 text-xs hover:bg-slab disabled:opacity-40" onClick={() => go((active ?? 0) - 1)} disabled={active === null || active === 0}>
+            <span aria-hidden="true">← </span>Previous step
           </button>
-          <button type="button" className="min-h-9 rounded-md border border-violet/50 bg-violet/10 px-3 py-1 text-xs text-violet hover:bg-violet/20 disabled:opacity-40" onClick={() => go(active === null ? 0 : active + 1)} disabled={active === steps.length - 1} aria-label={active === null ? "Start the change story" : "Next step"}>
-            {active === null ? "Begin ▸" : "Next →"}
+          <button type="button" className="min-h-9 rounded-md border border-violet/50 bg-violet/10 px-3 py-1 text-xs text-violet hover:bg-violet/20 disabled:opacity-40" onClick={() => go(active === null ? 0 : active + 1)} disabled={active === steps.length - 1}>
+            {active === null ? "Start the change story" : "Next step"}
+            <span aria-hidden="true">{active === null ? " ▸" : " →"}</span>
           </button>
           {active !== null && (
             <button type="button" className="min-h-9 rounded-md border border-seam px-3 py-1 text-xs text-mist hover:bg-slab" onClick={() => onActivate(null)}>
