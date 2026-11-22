@@ -233,7 +233,11 @@ export function GraphCanvas(props: Props) {
   const { graph, mode, highlight, selectedId, focus, fileUnknowns, compact, initialFocusIds, onSelectNode, onSelectEdge, onClear, onShowUnknowns } = props;
   const flow = useReactFlow();
   const emphasis = highlight?.networks ?? EMPTY;
+  // Readable zoom for the opening view and "Go to" focusing on small screens.
   const minZoom = compact ? 0.55 : 0.3;
+  // Lowest zoom anywhere, including the Fit control. On small screens it must sit well below the readable
+  // zoom, or Fit cannot show a multi-column graph and clips its outer nodes. Desktop is unchanged (0.3).
+  const fitFloor = compact ? 0.1 : 0.3;
 
   const nodes = useMemo<ServiceFlowNode[]>(
     () =>
@@ -303,8 +307,8 @@ export function GraphCanvas(props: Props) {
       edgeTypes={edgeTypes}
       forceColorMode="dark"
       fitView
-      fitViewOptions={{ padding: "6%", minZoom }}
-      minZoom={compact ? 0.4 : 0.3}
+      fitViewOptions={{ padding: "6%", minZoom: fitFloor }}
+      minZoom={fitFloor}
       maxZoom={1.8}
       nodesDraggable={false}
       nodesConnectable={false}

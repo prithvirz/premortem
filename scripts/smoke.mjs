@@ -216,6 +216,41 @@ async function overlapCheck(page, label) {
   await ctx.close();
 }
 
+// ---------------- Mobile Fit regression: every scenario, 360px and 390px ----------------
+// Fit must show all nodes. Before the fix, a 0.4 zoom floor on small screens clipped multi-column graphs.
+for (const width of [360, 390]) {
+  const { ctx, page, errors } = await open({ width, height: 844 }, { reducedMotion: "reduce" });
+  for (const name of ["The Severed Cache", "The Renamed Database", "The Quiet Config Drift"]) {
+    await scenarioButton(page, name).click();
+    await settle(page, 300);
+    check(`fit ${width}px ${name}: risk list is still the default`, (await page.getByRole("radio", { name: "Risk list" }).getAttribute("aria-checked")) === "true");
+    await page.getByRole("radio", { name: "Graph" }).click();
+    await page.locator(".react-flow__node").first().waitFor();
+    await settle(page);
+    const opening = await page.evaluate(() => Number(/scale\(([\d.]+)\)/.exec(document.querySelector(".react-flow__viewport")?.style.transform ?? "")?.[1] ?? 0));
+    check(`fit ${width}px ${name}: opening view stays readable`, opening >= 0.54, `(scale ${opening})`);
+    await page.locator(".react-flow__controls-fitview").click();
+    await settle(page, 500);
+    const r = await page.evaluate(() => {
+      const c = document.querySelector(".react-flow").getBoundingClientRect();
+      const nodes = [...document.querySelectorAll(".react-flow__node")];
+      const clipped = nodes
+        .filter((n) => {
+          const b = n.getBoundingClientRect();
+          return b.left < c.left - 0.5 || b.right > c.right + 0.5 || b.top < c.top - 0.5 || b.bottom > c.bottom + 0.5;
+        })
+        .map((n) => n.getAttribute("data-id"));
+      return { count: nodes.length, clipped };
+    });
+    check(`fit ${width}px ${name}: Fit shows all ${r.count} nodes`, r.count > 0 && r.clipped.length === 0, r.clipped.join(", "));
+    await page.getByRole("radio", { name: "Risk list" }).click();
+    await settle(page, 200);
+  }
+  check(`fit ${width}px: no horizontal page overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+  check(`fit ${width}px: no console errors`, errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
 // ---------------- Keyboard only ----------------
 {
   const { ctx, page, errors } = await open({ width: 1280, height: 900 });
