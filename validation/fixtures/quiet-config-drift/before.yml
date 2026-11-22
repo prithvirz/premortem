@@ -1,0 +1,27 @@
+services:
+  proxy:
+    image: nginx:1.27
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on: [api]
+  api:
+    image: acme/api:3.1
+    ports:
+      - "8080:3000"
+      - "127.0.0.1:9229:9229"
+    environment:
+      DATABASE_URL: postgres://app:change-me@db:5432/app
+      JWT_SECRET: change-me
+      LOG_LEVEL: info
+    depends_on: [db]
+  worker:
+    image: acme/worker:3.1
+    environment:
+      - REDIS_URL=redis://cache:6379
+      - LOG_LEVEL=info
+    depends_on: [cache]
+  db:
+    image: postgres:16
+  cache:
+    image: redis:7

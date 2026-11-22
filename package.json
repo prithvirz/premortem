@@ -2,7 +2,7 @@
   "name": "premortem",
   "version": "0.1.0",
   "private": true,
-  "description": "See what your deployment might break before it goes live.",
+  "description": "See what your Docker Compose deployment might break before it goes live. Local, evidence-based change analysis with what-if fix previews.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,25 +11,31 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs http://localhost:3200 && node scripts/smoke-fix.mjs http://localhost:3200",
-    "a11y": "node scripts/a11y.mjs http://localhost:3200"
+    "a11y": "node scripts/a11y.mjs http://localhost:3200",
+    "validate:docker": "node validation/run.mjs",
+    "export:fixtures": "node scripts/export-compose-fixtures.mjs"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.1.3",
+    "@xyflow/react": "^13.0.2",
     "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@dagrejs/dagre": "^3.1.3",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@xyflow/react": "^13.0.2",
     "axe-core": "^4.14.1",
     "playwright-core": "^1.65.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.0",
     "vitest": "^5.1.1"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

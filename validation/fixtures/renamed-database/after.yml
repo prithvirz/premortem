@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+  worker:
+    image: acme/worker:1.9
+    depends_on:
+      postgres:
+        condition: service_healthy
+  database:
+    image: postgres:16
+    ports:
+      - "5432:5432"

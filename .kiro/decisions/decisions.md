@@ -25,7 +25,7 @@ Segmentation is commonly intentional; one low-confidence finding per service avo
 Maintained, YAML 1.2 (so `22:22` stays a string), anchors/merge keys, duplicate-key detection, alias limit, no code execution.
 
 ## D9: TypeScript 5.9, not 7
-Next 16's toolchain targets the 5.x compiler API.
+Chosen conservatively at project start: 5.x is the long-standing line that Next.js tooling is built against. TypeScript 7 was not tried, so this is a caution, not a known incompatibility.
 
 ## D10: Defer React Flow to M2
 Milestone 1 has no graph UI. Findings already carry `relationships` for the graph to consume.
@@ -86,3 +86,10 @@ The verdict, tally, and styling come from the engine's new non-informational fin
 
 ## D29: Automated a11y audit as a release gate
 `scripts/a11y.mjs` runs axe-core (WCAG 2.1 A/AA and best practice) on eight UI states. Accessible names end with the visible text, so voice control can target what is on screen.
+
+
+## D30: Docker ground truth lives outside the app
+PreMortem never runs Docker. Independent checks with real Docker Compose (`docker compose config` on the example files, plus a DNS test) live in `validation/` and run in a disposable CI job. A unit test keeps the static engine's conclusions aligned with the same expectations, so the app and the ground truth cannot drift silently.
+
+## D31: Bundled libraries are runtime dependencies
+`@xyflow/react` and `@dagrejs/dagre` ship in the browser bundle, so they are `dependencies`, not `devDependencies`. Test-only tools (playwright-core, axe-core) stay dev-only and are never bundled.

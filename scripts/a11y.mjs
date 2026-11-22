@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const axePath = require.resolve("axe-core/axe.min.js");
 const base = process.argv[2] ?? "http://localhost:3200";
-const browser = await chromium.launch({ channel: "msedge", headless: true });
+const browser = await chromium.launch({ channel: process.env.PM_BROWSER_CHANNEL ?? "msedge", headless: true });
 
 const states = [
   ["desktop: default", { w: 1440, h: 1000 }, async () => {}],

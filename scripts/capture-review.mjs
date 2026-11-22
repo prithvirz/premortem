@@ -8,7 +8,7 @@ const out = process.argv[3] ?? ".agents/screenshots/review-m2.5";
 mkdirSync(out, { recursive: true });
 const settle = (page) => page.waitForTimeout(1000); // let transitions finish
 
-const browser = await chromium.launch({ channel: "msedge", headless: true });
+const browser = await chromium.launch({ channel: process.env.PM_BROWSER_CHANNEL ?? "msedge", headless: true });
 const errors = [];
 
 async function open(viewport) {

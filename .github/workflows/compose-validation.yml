@@ -1,0 +1,25 @@
+name: Compose validation (Docker)
+
+# Independent ground-truth check of the example files with real Docker Compose on a disposable runner.
+# Kept separate from the app: PreMortem itself never runs Docker.
+on:
+  push:
+    paths: ["validation/**", "src/lib/examples/**", ".github/workflows/compose-validation.yml"]
+  pull_request:
+    paths: ["validation/**", "src/lib/examples/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: docker compose version
+      - run: node validation/run.mjs

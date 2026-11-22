@@ -1,0 +1,6 @@
+services:
+  api:
+    image: acme/api:2.4
+    networks: [frontend, backend]
+networks:
+  frontend:

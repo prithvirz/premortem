@@ -1,0 +1,15 @@
+# Runtime check: depends_on orders startup but does not connect services on different networks.
+# `docker compose config` accepts this file; PreMortem reports it as an inferred risk.
+services:
+  app:
+    image: alpine:3.20
+    command: ["sleep", "300"]
+    depends_on: [db]
+    networks: [frontend]
+  db:
+    image: alpine:3.20
+    command: ["sleep", "300"]
+    networks: [data]
+networks:
+  frontend:
+  data:

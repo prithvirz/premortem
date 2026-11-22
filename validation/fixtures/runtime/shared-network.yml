@@ -1,0 +1,13 @@
+# Runtime check: two services on a shared network resolve each other by service name.
+services:
+  app:
+    image: alpine:3.20
+    command: ["sleep", "300"]
+    depends_on: [db]
+    networks: [backend]
+  db:
+    image: alpine:3.20
+    command: ["sleep", "300"]
+    networks: [backend]
+networks:
+  backend:

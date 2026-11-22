@@ -1,0 +1,9 @@
+services:
+  app:
+    image: acme/app:1.4
+    depends_on: [postgres]
+  database:
+    image: postgres:16
+    networks: [data]
+networks:
+  data:

@@ -15,7 +15,7 @@ const check = (name, ok, detail = "") => {
 };
 const settle = (page, ms = 700) => page.waitForTimeout(ms);
 
-const browser = await chromium.launch({ channel: "msedge", headless: true });
+const browser = await chromium.launch({ channel: process.env.PM_BROWSER_CHANNEL ?? "msedge", headless: true });
 
 async function open(viewport, opts = {}) {
   const ctx = await browser.newContext({ viewport, reducedMotion: opts.reducedMotion ?? "no-preference" });

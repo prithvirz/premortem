@@ -1,0 +1,25 @@
+services:
+  web:
+    image: nginx:1.27
+    ports:
+      - "8080:80"
+    depends_on: [api]
+    networks: [frontend]
+  api:
+    image: acme/api:2.4
+    depends_on: [db, redis]
+    networks: [frontend, backend]
+  db:
+    image: postgres:16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+  redis:
+    image: redis:7
+    networks: [cache]
+networks:
+  frontend:
+  backend:
+  cache:
+volumes:
+  pgdata:

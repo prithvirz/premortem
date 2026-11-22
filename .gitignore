@@ -9,6 +9,8 @@ next-env.d.ts
 
 # secrets and local env
 .env*
+# empty placeholder needed by a validation fixture (contains no values)
+!validation/fixtures/quiet-config-drift/.env.worker
 *.pem
 *.key
 .vercel

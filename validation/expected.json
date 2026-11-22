@@ -1,0 +1,28 @@
+{
+  "$comment": "Ground-truth expectations checked with real Docker Compose in CI (validation/run.mjs). 'config' is the expected result of `docker compose config --quiet`. 'premortem' is what the static engine must conclude for the same file pair (tests/validation-fixtures.test.ts).",
+  "config": [
+    { "file": "severed-cache/before.yml", "expect": "valid" },
+    { "file": "severed-cache/after.yml", "expect": "valid" },
+    { "file": "renamed-database/before.yml", "expect": "valid" },
+    { "file": "renamed-database/after.yml", "expect": "invalid", "match": "undefined service" },
+    { "file": "quiet-config-drift/before.yml", "expect": "valid" },
+    { "file": "quiet-config-drift/after.yml", "expect": "valid" },
+    { "file": "renamed-onto-other-network/before.yml", "expect": "valid" },
+    { "file": "renamed-onto-other-network/after.yml", "expect": "invalid", "match": "undefined service" },
+    { "file": "renamed-onto-other-network/proposed.yml", "expect": "valid" },
+    { "file": "undefined-network/before.yml", "expect": "valid" },
+    { "file": "undefined-network/after.yml", "expect": "invalid", "match": "undefined network" }
+  ],
+  "premortem": [
+    { "pair": ["severed-cache/before.yml", "severed-cache/after.yml"], "validationFindings": 0, "inferredRuleIds": ["network-lost"] },
+    { "pair": ["renamed-database/before.yml", "renamed-database/after.yml"], "validationFindings": 2, "inferredRuleIds": [] },
+    { "pair": ["quiet-config-drift/before.yml", "quiet-config-drift/after.yml"], "validationFindings": 0, "inferredRuleIds": ["port-exposure-widened", "port-host-changed", "port-removed"] },
+    { "pair": ["renamed-onto-other-network/before.yml", "renamed-onto-other-network/after.yml"], "validationFindings": 1, "inferredRuleIds": [] },
+    { "pair": ["renamed-onto-other-network/before.yml", "renamed-onto-other-network/proposed.yml"], "validationFindings": 0, "inferredRuleIds": ["dependency-unreachable"] },
+    { "pair": ["undefined-network/before.yml", "undefined-network/after.yml"], "validationFindings": 1, "inferredRuleIds": [] }
+  ],
+  "runtime": [
+    { "file": "runtime/shared-network.yml", "from": "app", "target": "db", "expect": "resolves" },
+    { "file": "runtime/split-networks.yml", "from": "app", "target": "db", "expect": "does-not-resolve" }
+  ]
+}
