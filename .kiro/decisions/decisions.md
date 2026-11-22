@@ -59,3 +59,18 @@ React Flow's own initial fit, run after node measurement, was the only reliable 
 
 ## D20: Mobile defaults to a risk list
 At 390px a full topology graph is unreadable. The list shows affected relationships first, then services by severity, with the same tags and badges. The graph stays one tap away and opens on the top risk.
+
+## D21: Offset splicing plus semantic verification for patches
+Full re-serialization changed unrelated lines, so patches splice text at parser offsets. Every patch is re-parsed and compared with the intended mutation; any mismatch declines the fix.
+
+## D22: Decline rather than guess
+Anchors, aliases, merge keys, `include`, `extends`, interpolation, multiple documents, network_mode conflicts and duplicate references all decline with a reason. Policy and port findings never get automatic fixes, because the correct value is unknowable.
+
+## D23: Cleared means "the engine no longer reports this id"
+Preview results compare finding ids between the current and proposed analysis. Wording is limited to "Configuration warning cleared after reanalysis" or "remains".
+
+## D24: Fix-level reachability warning instead of a new rule
+Retargeting to a service on another network clears the dangling-reference warning, but the network rule only compares services present in both versions. Rather than add a detection rule (out of scope), the proposal checks reachability and shows a prominent warning.
+
+## D25: Apply is two-step, AFTER-only, undoable once
+Preview never mutates editors. Apply requires a second confirmation, touches only AFTER, and offers one undo. Editing a file discards a stale preview.

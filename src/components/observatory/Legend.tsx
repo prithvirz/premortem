@@ -32,7 +32,7 @@ function Sample({ v }: { v: EdgeVisual }) {
   );
 }
 
-export function Legend({ mode, defaultOpen }: { mode: ViewMode; defaultOpen: boolean }) {
+export function Legend({ mode, defaultOpen, preview = false }: { mode: ViewMode; defaultOpen: boolean; preview?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-t border-seam text-[11px] text-mist">
@@ -41,7 +41,16 @@ export function Legend({ mode, defaultOpen }: { mode: ViewMode; defaultOpen: boo
       </button>
       {open && (
         <ul id="graph-legend" className="flex flex-wrap gap-x-4 gap-y-1.5 px-3 pb-2.5" aria-label="Graph legend">
-          {ITEMS.filter((i) => i.modes.includes(mode)).map((i) => (
+          {preview && (
+            <li className="flex items-center gap-1.5">
+              <Sample v="restored" />
+              <span aria-hidden="true" className="text-spectral">
+                ✓
+              </span>
+              Reconnected in preview (not applied)
+            </li>
+          )}
+          {ITEMS.filter((i) => i.modes.includes(preview ? "after" : mode)).map((i) => (
             <li key={i.v} className="flex items-center gap-1.5">
               <Sample v={i.v} />
               <span aria-hidden="true" style={{ color: edgeSpec(i.v, "depends_on").stroke }}>

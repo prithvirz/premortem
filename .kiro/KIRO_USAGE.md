@@ -30,3 +30,11 @@ Update this file as the project proceeds. Entries are factual.
   - Lost-network emphasis rings showed on dimmed services. Emphasis now only applies to lit nodes.
   - Timeline buttons were 26px tall on mobile. Raised to 36px.
   - The zoom "fit" button was covered by the React Flow attribution. Controls moved to the left.
+## Milestone 3
+- Kiro committed the approved M2.5 state first (`7699b72`).
+- Before choosing a patch strategy, Kiro measured how `yaml` round-trips the scenario files. Full re-serialization changed unrelated lines, so it switched to offset splicing with semantic verification.
+- The fix library got 35 tests before the UI used it. Tests caught:
+  - Insertions one line too low after nested blocks (the parser's end offset sits after the newline). Verification refused the patch; fixed.
+  - Diff ordering showed additions before deletions; fixed.
+  - A coverage gap: retargeting to a service on another network cleared the warning with no new finding. Kiro added a fix-level reachability warning instead of a new rule, and recorded the gap.
+- Screenshot review by Kiro found the dependency preview's reconnected edges looping through the replacement node, and the camera framing the removed ghost. Fixed by moving the confirmed replacement into the ghost's position and framing restored endpoints.

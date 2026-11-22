@@ -20,7 +20,7 @@ const rank = (n: ViewNode) => (n.risk ? SEVERITY_RANK[n.risk] + 1 : 0);
 
 /** Compact service-and-risk list: the default mobile view, where a graph is too small to read. */
 export function RiskList({ graph, findings, highlight, selectedId, onSelectNode, onSelectEdge }: Props) {
-  const relationships = graph.edges.filter((e) => e.visual === "broken" || e.visual === "at-risk");
+  const relationships = graph.edges.filter((e) => e.visual === "broken" || e.visual === "at-risk" || e.visual === "restored");
   const services = graph.nodes
     .filter((n) => n.kind === "service")
     .sort((a, b) => rank(b) - rank(a) || Number(b.visual !== "steady") - Number(a.visual !== "steady") || a.label.localeCompare(b.label));
@@ -35,21 +35,22 @@ export function RiskList({ graph, findings, highlight, selectedId, onSelectNode,
           <ul className="space-y-1.5">
             {relationships.map((e) => {
               const broken = e.visual === "broken";
+              const restored = e.visual === "restored";
               return (
                 <li key={e.id}>
                   <button
                     type="button"
                     onClick={() => onSelectEdge(e.id)}
                     aria-pressed={selectedId === e.id}
-                    className={`flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2 text-left ${broken ? "border-blood/45 bg-blood/[0.06]" : "border-ember/40 bg-ember/[0.05]"}`}
+                    className={`flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2 text-left ${restored ? "border-spectral/50 bg-spectral/[0.07]" : broken ? "border-blood/45 bg-blood/[0.06]" : "border-ember/40 bg-ember/[0.05]"}`}
                   >
                     <span className="font-mono text-sm text-bone">{e.source.slice(4)}</span>
-                    <span aria-hidden="true" className={broken ? "text-blood" : "text-ember"}>
-                      {broken ? "─✕─" : "┄!┄"}
+                    <span aria-hidden="true" className={restored ? "text-spectral" : broken ? "text-blood" : "text-ember"}>
+                      {restored ? "──✓──" : broken ? "─✕─" : "┄!┄"}
                     </span>
                     <span className="font-mono text-sm text-bone">{e.target.slice(4)}</span>
-                    <span className={`ml-auto text-right text-xs ${broken ? "text-blood" : "text-ember"}`}>
-                      {broken ? "severed" : "possibly affected"}
+                    <span className={`ml-auto text-right text-xs ${restored ? "text-spectral" : broken ? "text-blood" : "text-ember"}`}>
+                      {restored ? "restored in preview" : broken ? "severed" : "possibly affected"}
                       <span className="block text-[11px] text-mist">{e.label}</span>
                     </span>
                   </button>

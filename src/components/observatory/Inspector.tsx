@@ -5,6 +5,9 @@ import type { Finding, Relationship } from "@/lib/compose/types";
 import type { GraphModel, ViewMode } from "@/lib/viz/graph";
 import type { ReportSummary } from "@/lib/viz/summary";
 import { EDGE_KIND_LABEL, severityVisual } from "@/lib/viz/visuals";
+import type { FixPreview } from "@/lib/fix/preview";
+import type { FixOffer } from "@/lib/fix/proposals";
+import { FixPanel } from "./FixPanel";
 import { BasisTag, SectionLabel, SeverityBadge, basisHint } from "./ui";
 
 import type { Selection } from "@/lib/viz/highlight";
@@ -19,6 +22,7 @@ interface Props {
   selection: Selection;
   onSelect: (s: Selection) => void;
   onFocus: (nodeIds: string[]) => void;
+  fix?: FixControls;
 }
 
 const STATIC_LIMITS =
@@ -87,7 +91,15 @@ function ServiceLink({ name, onFocus, onSelect }: { name: string; onFocus: (ids:
   );
 }
 
-function FindingView({ f, onSelect, onFocus }: { f: Finding; onSelect: (s: Selection) => void; onFocus: (ids: string[]) => void }) {
+export interface FixControls {
+  offer: FixOffer;
+  preview: FixPreview | null;
+  onPreview: (optionId: string) => void;
+  onDiscard: () => void;
+  onApply: () => void;
+}
+
+function FindingView({ f, onSelect, onFocus, fix }: { f: Finding; onSelect: (s: Selection) => void; onFocus: (ids: string[]) => void; fix?: FixControls }) {
   const before = f.evidence.filter((e) => e.side === "before");
   const after = f.evidence.filter((e) => e.side === "after");
   return (
@@ -117,6 +129,8 @@ function FindingView({ f, onSelect, onFocus }: { f: Finding; onSelect: (s: Selec
         <p className="text-sm leading-relaxed">{f.possibleConsequence}</p>
         <p className="mt-2 text-xs text-mist">{basisHint(f.basis)}</p>
       </div>
+
+      {fix && <FixPanel offer={fix.offer} preview={fix.preview} onPreview={fix.onPreview} onDiscard={fix.onDiscard} onApply={fix.onApply} />}
 
       <div>
         <SectionLabel>Why this is flagged</SectionLabel>
@@ -390,7 +404,7 @@ function Overview({ report, summary, onSelect }: { report: OkReport; summary: Re
 }
 
 export function Inspector(props: Props) {
-  const { selection, report, model, summary, mode, onSelect, onFocus } = props;
+  const { selection, report, model, summary, mode, onSelect, onFocus, fix } = props;
   const finding = selection?.kind === "finding" ? report.findings.find((f) => f.id === selection.id) : undefined;
   return (
     <div className="space-y-3">
@@ -400,7 +414,7 @@ export function Inspector(props: Props) {
         </button>
       )}
       {!selection && <Overview report={report} summary={summary} onSelect={onSelect} />}
-      {finding && <FindingView key={finding.id} f={finding} onSelect={onSelect} onFocus={onFocus} />}
+      {finding && <FindingView key={finding.id} f={finding} onSelect={onSelect} onFocus={onFocus} fix={fix && fix.offer.findingId === finding.id ? fix : undefined} />}
       {selection?.kind === "node" && <NodeView key={selection.id} id={selection.id} model={model} report={report} mode={mode} onSelect={onSelect} onFocus={onFocus} />}
       {selection?.kind === "edge" && <EdgeView key={selection.id} id={selection.id} model={model} report={report} onSelect={onSelect} onFocus={onFocus} />}
       {selection?.kind === "finding" && !finding && <p className="text-sm text-mist">That finding no longer exists after your edit.</p>}

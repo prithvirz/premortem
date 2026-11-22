@@ -2,8 +2,9 @@ import type { Severity } from "../compose/types";
 import type { GraphEdge, GraphModel, GraphNode, ViewMode } from "./graph";
 
 export type NodeVisual = "steady" | "changed" | "added" | "removed" | "missing";
-export type EdgeVisual = "steady" | "added" | "removed" | "broken" | "at-risk" | "isolated";
-export type TagState = "kept" | "added" | "removed";
+export type EdgeVisual = "steady" | "added" | "removed" | "broken" | "at-risk" | "isolated" | "restored";
+/** "proposed" is used only in a fix preview: the membership exists in the proposed AFTER, not the current one. */
+export type TagState = "kept" | "added" | "removed" | "proposed";
 
 /** A network a service is attached to, shown as a tag on the service instead of a membership curve. */
 export interface NetworkTag {
@@ -86,7 +87,7 @@ function tagsFor(model: GraphModel, nodeById: Map<string, GraphNode>, n: GraphNo
     const net = nodeById.get(e.target);
     tags.push({ id: e.target, label: net?.implicit ? "default" : (net?.label ?? e.target), state, external: net?.external, implicit: net?.implicit });
   }
-  const order: Record<TagState, number> = { kept: 0, added: 1, removed: 2 };
+  const order: Record<TagState, number> = { kept: 0, added: 1, proposed: 1, removed: 2 };
   return tags.sort((a, b) => order[a.state] - order[b.state] || a.label.localeCompare(b.label));
 }
 

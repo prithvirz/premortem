@@ -40,13 +40,15 @@ const hidden = "!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent";
 export function NetworkTagChip({ tag, emphasis, size = "sm" }: { tag: NetworkTag; emphasis?: NetworkEmphasis; size?: "sm" | "md" }) {
   const base = size === "sm" ? "px-1.5 py-px text-[10px]" : "px-2 py-0.5 text-[11px]";
   const state =
-    tag.state === "added"
+    tag.state === "proposed"
+      ? "pm-proposed border-dashed border-spectral text-spectral bg-spectral/15"
+      : tag.state === "added"
       ? "border-spectral/50 text-spectral"
       : tag.state === "removed"
         ? "border-dashed border-veil/60 text-veil line-through decoration-veil/80"
         : "border-violet/35 text-violet";
   const ring = emphasis === "lost" ? "ring-2 ring-blood/80 ring-offset-1 ring-offset-slab" : emphasis === "related" ? "ring-1 ring-spectral/70 ring-offset-1 ring-offset-slab" : "";
-  const sign = tag.state === "added" ? "+" : tag.state === "removed" ? "−" : "≋";
+  const sign = tag.state === "added" || tag.state === "proposed" ? "+" : tag.state === "removed" ? "−" : "≋";
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border bg-void/70 font-mono ${base} ${state} ${ring}`}
@@ -54,11 +56,12 @@ export function NetworkTagChip({ tag, emphasis, size = "sm" }: { tag: NetworkTag
       data-emphasis={emphasis ?? "none"}
     >
       <span aria-hidden="true">{sign}</span>
-      <span className="sr-only">{tag.state === "added" ? "added network" : tag.state === "removed" ? "removed network" : "network"} </span>
+      <span className="sr-only">{tag.state === "proposed" ? "proposed network" : tag.state === "added" ? "added network" : tag.state === "removed" ? "removed network" : "network"} </span>
       {tag.label}
       {tag.implicit && <span className="text-veil">(implicit)</span>}
       {tag.external && <span className="text-veil">(ext)</span>}
       {emphasis === "lost" && <span className="font-sans text-[9px] font-semibold tracking-wide text-blood uppercase no-underline">lost</span>}
+      {tag.state === "proposed" && <span className="font-sans text-[9px] font-semibold tracking-wide uppercase">preview</span>}
     </span>
   );
 }
@@ -123,7 +126,7 @@ const ServiceNode = memo(function ServiceNode({ data, selected }: NodeProps<Serv
   );
 });
 
-const EDGE_GLYPH: Partial<Record<EdgeVisual, string>> = { broken: "✕", "at-risk": "!", isolated: "∅", added: "+", removed: "−" };
+const EDGE_GLYPH: Partial<Record<EdgeVisual, string>> = { broken: "✕", "at-risk": "!", isolated: "∅", added: "+", removed: "−", restored: "✓" };
 const GAP = 26;
 
 function RiskEdge(props: EdgeProps<RiskFlowEdge>) {
@@ -157,8 +160,9 @@ function RiskEdge(props: EdgeProps<RiskFlowEdge>) {
         d={path}
         fill="none"
         markerEnd={markerEnd}
-        className={`react-flow__edge-path pm-edge-path ${spec.animated ? "pm-animated" : ""}`}
-        style={{ stroke: spec.stroke, strokeWidth: selected ? spec.width + 1.5 : spec.width, strokeDasharray: dash, opacity: dimmed ? 0.12 : spec.opacity }}
+        pathLength={spec.restore ? 1 : undefined}
+        className={`react-flow__edge-path pm-edge-path ${spec.animated ? "pm-animated" : ""} ${spec.restore ? "pm-restore" : ""}`}
+        style={{ stroke: spec.stroke, strokeWidth: selected ? spec.width + 1.5 : spec.width, strokeDasharray: spec.restore ? 1 : dash, opacity: dimmed ? 0.12 : spec.opacity }}
       />
       {severed && !dimmed && (
         // End caps either side of the cut make the break read as deliberate, not as a rendering gap.
@@ -176,10 +180,10 @@ function RiskEdge(props: EdgeProps<RiskFlowEdge>) {
             data-edge-label={id}
             className={`nodrag nopan absolute rounded-full border bg-void px-2 py-0.5 font-mono text-[10px] whitespace-nowrap ${dimmed ? "pm-dim" : ""}`}
             style={{ transform: `translate(-50%, ${severed ? "0" : "-50%"}) translate(${lx}px, ${severed ? ly + 14 : ly}px)`, color: spec.stroke, borderColor: `${spec.stroke}70`, pointerEvents: "all" }}
-            aria-label={`${EDGE_KIND_LABEL[view.kind]} ${view.source.slice(4)} to ${view.target.slice(4)}: ${view.visual === "broken" ? "severed, " : ""}${view.label}`}
+            aria-label={`${EDGE_KIND_LABEL[view.kind]} ${view.source.slice(4)} to ${view.target.slice(4)}: ${view.visual === "broken" ? "severed, " : ""}${view.label}${view.visual === "restored" ? ", in preview" : ""}`}
           >
             <span aria-hidden="true">{EDGE_GLYPH[view.visual]} </span>
-            {view.visual === "at-risk" ? `possibly: ${view.label}` : view.label}
+            {view.visual === "at-risk" ? `possibly: ${view.label}` : view.visual === "restored" ? `${view.label} · preview` : view.label}
           </button>
         </EdgeLabelRenderer>
       )}

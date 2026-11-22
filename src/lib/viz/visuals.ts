@@ -38,6 +38,8 @@ export interface EdgeSpec {
   opacity: number;
   /** Draw with a deliberate gap at the midpoint: the relationship is cut in the configuration. */
   severed?: boolean;
+  /** Draw the stroke in once: a relationship the preview reconnects. */
+  restore?: boolean;
 }
 
 export function edgeSpec(visual: EdgeVisual, kind: EdgeKind): EdgeSpec {
@@ -52,6 +54,8 @@ export function edgeSpec(visual: EdgeVisual, kind: EdgeKind): EdgeSpec {
       return { stroke: COLORS.red, width: 2.5, animated: false, opacity: 1, severed: true };
     case "at-risk":
       return { stroke: COLORS.amber, dash: "4 4", width: 2, animated: true, opacity: 1 };
+    case "restored":
+      return { stroke: COLORS.cyan, width: 2.75, animated: false, opacity: 1, restore: true };
     case "isolated":
       return { stroke: COLORS.violet, dash: "1 5", width: 1.25, animated: false, opacity: 0.55 };
     case "added":
