@@ -1,0 +1,26 @@
+# dependencies and build output
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets and local env
+.env*
+*.pem
+*.key
+.vercel
+
+# test and tooling artifacts
+test-results
+playwright-report
+.agents
+.worktrees
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db

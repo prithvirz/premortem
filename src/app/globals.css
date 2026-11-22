@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #0a0a0f;
+  --color-crypt: #111118;
+  --color-slab: #17171f;
+  --color-seam: #26252f;
+  --color-mist: #a9a6b8;
+  --color-bone: #ebe8f2;
+  --color-veil: #6e6a86;
+  --color-violet: #9b8cff;
+  --color-spectral: #4cc9d4;
+  --color-ember: #ff9a3c;
+  --color-blood: #ff4d5e;
+  --color-bile: #e8c25a;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgb(155 140 255 / 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgb(76 201 212 / 0.05), transparent 60%),
+    var(--color-void);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-spectral);
+  outline-offset: 2px;
+}
+
+/* ---------- React Flow surface ---------- */
+.observatory-flow {
+  --xy-background-color: transparent;
+  --xy-node-boxshadow-selected: none;
+  --xy-edge-label-background-color: transparent;
+  --xy-controls-button-background-color: var(--color-slab);
+  --xy-controls-button-background-color-hover: var(--color-seam);
+  --xy-controls-button-color: var(--color-bone);
+  --xy-controls-button-border-color: var(--color-seam);
+}
+.observatory-flow .react-flow__edgelabel-renderer {
+  z-index: 5;
+}
+.observatory-flow .react-flow__node:focus-visible {
+  outline: none;
+}
+.observatory-flow .react-flow__node:focus-visible > * {
+  outline: 2px solid var(--color-spectral);
+  outline-offset: 3px;
+}
+.observatory-flow .react-flow__edge:focus-visible .pm-edge-path {
+  stroke-width: 4px;
+}
+.observatory-flow .react-flow__attribution {
+  background: transparent;
+  color: var(--color-veil);
+}
+.observatory-flow .react-flow__attribution a {
+  color: var(--color-veil);
+}
+
+.pm-edge-path {
+  transition:
+    stroke 400ms ease,
+    opacity 400ms ease,
+    stroke-width 200ms ease;
+}
+.pm-edge-path.pm-animated {
+  animation: pm-dash 1.2s linear infinite;
+}
+.pm-dim {
+  opacity: 0.18 !important;
+  transition: opacity 300ms ease;
+}
+
+.pm-node {
+  transition:
+    opacity 400ms ease,
+    border-color 400ms ease,
+    box-shadow 400ms ease,
+    filter 400ms ease;
+}
+.pm-node-risk::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px var(--pm-risk), 0 0 18px -6px var(--pm-risk);
+  animation: pm-breathe 3.2s ease-in-out infinite;
+}
+.pm-node-ghost {
+  filter: saturate(0.2);
+}
+
+.pm-reveal {
+  animation: pm-rise 420ms ease both;
+}
+
+@keyframes pm-dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+@keyframes pm-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes pm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.pm-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-seam) transparent;
+}
